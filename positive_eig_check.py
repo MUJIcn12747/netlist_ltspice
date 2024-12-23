@@ -1,25 +1,22 @@
 import numpy as np
+from formula import Calculate_diag_matrixU
 
-def check_positive_real_eigenvalues(matrix):
+def check_positive_real_eigenvalues(matrix_A):
     try:
-        # 计算特征值
-        eigenvalues = np.linalg.eigvals(matrix)
+        # calculate eigenvalues of M = UA
+        matrix_U = Calculate_diag_matrixU(matrix_A)
+        matrix_M = np.dot(matrix_U, matrix_A)
+        eigenvalues = np.linalg.eigvals(matrix_M)
 
-        #print(eigenvalues)
+        # print(eigenvalues)
+        # print(matrix_M)
 
-        # 检查实部是否全为正
+        # The real parts of all eigenvalues are positive or not
         result = np.all(np.real(eigenvalues) > 0)
         return eigenvalues, result
 
-        # if result:
-        #     print("所有特征值的实部都为正。")
-        #     return eigenvalues, result
-        # else:
-        #     print("存在特征值的实部不为正。")
-        #     return eigenvalues, result
-
     except np.linalg.LinAlgError as e:
-        print(f"矩阵特征值计算失败: {e}")
+        print(f"Calculating eigenvalues failed: {e}")
         return False
 
 if __name__ == "__main__":
@@ -28,9 +25,11 @@ if __name__ == "__main__":
                        [-1, 2]])
 
     # 检查特征值实部是否全为正
-    result = check_positive_real_eigenvalues(matrix)
+    eigenvalues, result = check_positive_real_eigenvalues(matrix)
 
     if result:
+        print(eigenvalues)
         print("所有特征值的实部都为正。")
     else:
+        print(eigenvalues)
         print("存在特征值的实部不为正。")

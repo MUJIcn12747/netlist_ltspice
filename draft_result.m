@@ -46,20 +46,17 @@ for i = 1:length(cmp_folders)
         % 提取 I 和 V 数据
         ideal = data(:, 1);  % 第一列为 ideal
         test = data(:, 2);  % 第二列为 test
-        
-        % 绘制散点图
-        figure;
+       
+         % 创建图像但不显示
+        fig = figure('Visible', 'off');
         scatter(ideal, test, 'filled');  % 绘制填充散点图
         hold on;  % 保持图像
         
         % 添加对称参考线
         min_val = 0;  % 原点 (0, 0)
-%         min_val_x = min(0, min(ideal));
-%         min_val_y = min(0, min(test));
         max_val_x = max(ideal);  % ideal 的最大值
         max_val_y = max(test);  % test 的最大值
         plot([min_val, max_val_x], [min_val, max_val_y], 'r--', 'LineWidth', 1.5);  % 绘制对角线
-%         plot([-max_val_x, max_val_x], [-max_val_y, max_val_y], 'r--', 'LineWidth', 1.5);  % 绘制对角线
         
         %设置图像属性
         xlabel(header_titles{1});  % 横坐标标签
@@ -68,11 +65,12 @@ for i = 1:length(cmp_folders)
         grid on;  % 显示网格
         hold off;  % 结束叠加模式
         
-        % 可选：保存图像到文件
-%         output_dir = fullfile(selected_folder, 'output_plots');  % 保存图像的输出目录
-%         if ~exist(output_dir, 'dir')
-%             mkdir(output_dir);  % 创建目录
-%         end
-%         saveas(gcf, fullfile(output_dir, sprintf('%s_%s.png', cmp_folders(i).name, txt_files(j).name)));
+        % 保存图像到文件
+        output_dir = fullfile(selected_folder, 'output_plots');  % 保存图像的输出目录
+        if ~exist(output_dir, 'dir')
+            mkdir(output_dir);  % 创建目录
+        end
+        saveas(fig, fullfile(output_dir, sprintf('%s_%s.png', cmp_folders(i).name, txt_files(j).name)));
+        close(fig);  % 关闭图像以释放资源
     end
 end

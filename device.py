@@ -3,10 +3,7 @@ import time
 import subprocess
 import os
 import time
-import matplotlib.pyplot as plt
-import PyLTSpice 
-import parameters as param
-from OPAS import opa_
+import matplotlib.pyplot as plt 
 
 class RRAM_:
     conductance = 0                     # Conductance of the selected element of matrix

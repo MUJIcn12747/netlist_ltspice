@@ -75,8 +75,8 @@ for cmp_folder in cmp_folders:
         plt.show()
 
         # 可选：保存图像到文件
-        # output_dir = os.path.join(selected_folder, 'output_plots')  # 保存图像的输出目录
-        # if not os.path.exists(output_dir):
-        #     os.makedirs(output_dir)  # 创建目录
-        # plt.savefig(os.path.join(output_dir, f'{cmp_folder}_{txt_file}.png'))
+        output_dir = os.path.join(selected_folder, 'output_plots')  # 保存图像的输出目录
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)  # 创建目录
+        plt.savefig(os.path.join(output_dir, f'{cmp_folder}_{txt_file}.png'))
 

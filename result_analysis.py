@@ -11,11 +11,12 @@ import time
 import matplotlib.pyplot as plt
 import PyLTSpice 
 
-from parameters import NUM_MATRIX, INPUT_PATH, NETLIST_PATH, OUTPUT_PATH, LTSPICE_EXE
+from parameters import NUM_MATRIX, INPUT_PATH, NETLIST_PATH, OUTPUT_PATH, LTSPICE_EXE, alpha_inv
 from parameters import OPA,CIRCUIT,NEG_WEIGHT
 
 from parameters import InterConnection_Resistor,Row_InterConnection_Resistor,Column_InterConnection_Resistor
 from simulate import Get_Results
+from positive_eig_check import check_positive_real_eigenvalues
 
 def MVM_result(mvm_result, num_V, write_path):
     with open(write_path, "w") as file:
@@ -42,6 +43,15 @@ def INV_result(V_out, num_V, write_path):
             row = V_out[i]
             # Write the elements of the row to the file, separated by spaces
             file.write(" ".join([f"{value:.6f}" for value in row]) + "\n")
+
+def INV_stability_check(eigenvalues, positive_flag, positive_check_file):
+    with open(positive_check_file, "w") as file:
+            for value in eigenvalues:
+                file.write(f"{value}\n")
+            if positive_flag:
+                file.write("The real parts of all eigenvalues are positive\n")
+            else:
+                file.write("Not all eigenvalues have positive real part\n")
 
 def INV_result_verify(I_test, I_ideal, write_path):
     with open(write_path, 'w') as file:
@@ -113,21 +123,29 @@ if __name__=='__main__':
 
                     V_out, N, A, I, num_I = Get_Results(INPUT_FILE, NETLIST_DIR_INV, CIRCUIT=1)
 
+                    eigenvalues, positive_flag = check_positive_real_eigenvalues(A)
+                    if not positive_flag:
+                        print(f"Negative or non-real eigenvalue encountered at matrix {i}. Exiting simulation{i}.")
+                        inv_folder = os.path.join(OUTPUT_PATH, 'inv')
+                        os.makedirs(inv_folder, exist_ok=True)
+                        POSITIVE_CHECK_FILE = os.path.join(inv_folder, f"positive_check{i}.txt")
+                        INV_stability_check(eigenvalues, positive_flag, POSITIVE_CHECK_FILE)
+                        continue
+
                     inv_folder = os.path.join(OUTPUT_PATH, 'inv')
                     os.makedirs(inv_folder, exist_ok=True)
                     OUTPUT_FILE = os.path.join(inv_folder, f"{i}.txt")
-                    INV_result(V_out, num_I, OUTPUT_FILE)                # result of inv
+                    POSITIVE_CHECK_FILE = os.path.join(inv_folder, f"positive_check{i}.txt")
+                    INV_stability_check(eigenvalues, positive_flag, POSITIVE_CHECK_FILE)
+                    INV_result(V_out, num_I, OUTPUT_FILE)                                   # result of inv
 
-                    # I = I / np.max(I)
-                    # print(I)                    # input current vector
                     RESULT_VERIFY_DIR = os.path.join(inv_folder, f"cmp{i}")
                     os.makedirs(RESULT_VERIFY_DIR, exist_ok=True)
 
                     for j in range(num_I):
-                        I_test = np.dot(A, V_out[j])
-                        I_test = I_test * I[j, 0] / I_test[0]
-                        # I_test = I_test / I_test[np.argmax(np.abs(I_test))]
-                        # print(I_test)
+                        x_out = V_out[j] * np.max(I[j]) / (alpha_inv * np.max(A))
+                        I_test = np.dot(A, x_out)
+                        # I_test = I_test * I[j, 0] / I_test[0]
                         RESULT_VERIFY_FILE = os.path.join(RESULT_VERIFY_DIR, f"{j+1}.txt")
                         INV_result_verify(I_test, I[j], RESULT_VERIFY_FILE)
                 E=time.time()

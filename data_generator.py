@@ -1,5 +1,6 @@
 import random
 import os
+import numpy as np
 from parameters import N_SIZE,ROW_PINV,COL_PINV,NUM_V,NUM_I,NUM_MATRIX,INPUT_PATH, CIRCUIT
 
 def generate_numbers(N, row_pinv, col_pinv, num_V, num_I, num_Matrix, output_dir=INPUT_PATH):
@@ -43,10 +44,14 @@ def generate_numbers(N, row_pinv, col_pinv, num_V, num_I, num_Matrix, output_dir
                     # Write the first line: the number N
                     file.write(f"{N}\n")
             
-                    # Write N lines of N random real numbers between 10 and 40
-                    for _ in range(N):
-                        random_numbers = [f"{random.uniform(10, 40):.2f}" for _ in range(N)]
-                        file.write(" ".join(random_numbers) + "\n")
+                    # Generate a random positive definite matrix
+                    A = np.random.uniform(1, 4, size=(N, N))  # Generate random matrix
+                    # positive_definite_matrix = A
+                    positive_definite_matrix = np.dot(A.T, A)  # Ensure symmetry and positive definiteness
+
+                    # Write the matrix to the file
+                    for row in positive_definite_matrix:
+                        file.write(" ".join(f"{value:.2f}" for value in row) + "\n")
             
                     # Write the last line: N random real numbers between 1 and 9
                     for _ in range(num_I):

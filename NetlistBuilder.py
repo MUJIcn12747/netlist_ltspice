@@ -8,8 +8,8 @@ import PyLTSpice
 import parameters as param
 from OPAS import opa_
 from Circuit import Circuit_
-from parameters import maxConductance, minConductance, AM_or_QM, error_range_AM, num_Bit, sigma_QW, unit_Current, unit_Voltage
-from device import RRAM_
+from parameters import maxConductance, minConductance, AM_or_QM, error_range_AM, num_Bit, sigma_QW, unit_Current, unit_Voltage, alpha_inv
+from Mapping import Array_RealDevice_Update, InputVector_to_InputVoltage
 '''输入文件:inputFile\i.txt
    输入格式:第一行矩阵规模N
             之后N*N权重电导
@@ -46,9 +46,9 @@ def Read_Param_inv(file_path):
                         raise ValueError("Array Number Error")
                     data.append(numbers)
 
-            I=np.array(data)
-            num_I = I.shape[0]
-            return N, A ,I, num_I
+            vector_b=np.array(data)
+            num_b = vector_b.shape[0]
+            return N, A ,vector_b, num_b
     
     except Exception as e:
         print(f"Read File Error: {e}")
@@ -129,28 +129,15 @@ def Read_Param_pinv(file_path):
         print(f"Read File Error: {e}")
         return None
 
-def Array_RealDevice_Update(A,N,M):
-    updated_A = np.zeros_like(A)
-    max_value = np.max(A)
-    min_value = np.min(A)
-    rram = RRAM_(maxConductance, minConductance, AM_or_QM, error_range_AM, num_Bit, sigma_QW)
-    for i in range(N):
-        for j in range(M):
-            # 对每个元素应用 Write 函数
-            updated_A[i, j] = rram.Write(A[i, j], max_value, min_value)
-    return updated_A
-
-
 def Build_inv(N, A, I, write_path, opa_id=0, NEG_WEIGHT=0):
     circuit=Circuit_()
     opa=opa_(opa_id)
 
-    if (NEG_WEIGHT==0):                     # attach device model to conductance
-        updated_A= Array_RealDevice_Update(A,N,N)
-        A = 1 / updated_A                   # convert conductance to resistance
-        # A = 1e5 / A
-        I = I * unit_Current / np.max(I)
-        # I = 1e-6 * I
+    if (NEG_WEIGHT==0):
+        G_actual = Array_RealDevice_Update(A,N,N)       # attach device model to conductance
+        A_actual = G_actual / maxConductance
+        R = 1 / G_actual                   # convert conductance to resistance
+        V_in = InputVector_to_InputVoltage(I)
     else:                                   # real matrix with negative values
         A2=A.copy()
         for i in range(N):
@@ -168,22 +155,30 @@ def Build_inv(N, A, I, write_path, opa_id=0, NEG_WEIGHT=0):
         if (g_max/g_min>10):
             A_combined=A_combined+g_max/9
         '''
-        updated_A=Array_RealDevice_Update(A_combined,2*N,N)
-        A = 1 / updated_A[:N,:] 
-        A2=1/updated_A[N:,:]
+        G_actual = Array_RealDevice_Update(A_combined,2*N,N)
+        A_actual = G_actual / maxConductance
+        R = 1 / G_actual[:N,:] 
+        R2 = 1 / G_actual[N:,:]
         
         R_=100000
-        I = I * unit_Current / np.max(I)
+        V_in = InputVector_to_InputVoltage(I)
+
     for i in range(N):
         for j in range(N):
             r_num=N*i+j+1
             up_node=j+N+1
             down_node=i+1
-            circuit.add_res(r_num,up_node,down_node,A[i][j])
+            circuit.add_res(r_num,up_node,down_node,R[i][j])
+
+    for i in range(N):                                                  # unit conductance
+        r_num = '0' + str(i)
+        up_node=i+2*N+1
+        down_node=i+1
+        circuit.add_res(r_num, up_node, down_node, 1/maxConductance)
 
     for i in range(N):
-        node=i+1
-        circuit.add_idc(i+1,0,node,I[i])
+        node = i+2*N+1
+        circuit.add_vdc(i+1, node, 0, V_in[i])
 
     voltage=opa.work_voltage()
 
@@ -194,6 +189,7 @@ def Build_inv(N, A, I, write_path, opa_id=0, NEG_WEIGHT=0):
         node_in=i+1
         node_out=i+N+1
         circuit.add_opa(i+1,0,node_in,999,998,node_out,opa.name())
+
     if (NEG_WEIGHT==1):
         '''写入第二个阵列的电阻'''
         for i in range (N):
@@ -201,7 +197,7 @@ def Build_inv(N, A, I, write_path, opa_id=0, NEG_WEIGHT=0):
                 r_num=N*i+j+1+N*N
                 up_node=j+3*N+1
                 down_node=i+1
-                circuit.add_res(r_num,up_node,down_node,A2[i][j])
+                circuit.add_res(r_num,up_node,down_node,R2[i][j])
 
         '''写入模拟反相器，电阻为1MΩ'''
         for i in range(N):#写入输入端电阻
@@ -219,11 +215,11 @@ def Build_inv(N, A, I, write_path, opa_id=0, NEG_WEIGHT=0):
             node_out=i+3*N+1
             circuit.add_opa(i+1+N,0,node_in,999,998,node_out,opa.name())
 
-
     circuit.add_lib('LTC')
     circuit.add_lib('ADI')
     circuit.generate_netlist_file(write_path)
     circuit.clear()
+    return A_actual
 
 
 def Build_mvm(N, A, V, write_path, opa_id=0, NEG_WEIGHT=0):
@@ -231,16 +227,8 @@ def Build_mvm(N, A, V, write_path, opa_id=0, NEG_WEIGHT=0):
     opa=opa_(opa_id)
 
     if (NEG_WEIGHT==0):                     # attach device model to conductance
-        updated_A = np.zeros_like(A)
-        max_value = np.max(A)
-        min_value = np.min(A)
-        rram = RRAM_(maxConductance, minConductance, AM_or_QM, error_range_AM, num_Bit, sigma_QW)
-        for i in range(N):
-            for j in range(N):
-            # 对每个元素应用 Write 函数
-                updated_A[i, j] = rram.Write(A[i, j], max_value, min_value)
-
-        A = 1 / updated_A                   # convert conductance to resistance
+        A_actual = Array_RealDevice_Update(A,N,N)
+        A = 1 / A_actual                   # convert conductance to resistance
         V = V * unit_Voltage / np.max(V)
     else:                                   # real matrix with negative values
         Build_CCRS_mvm(N,A,V,write_path,opa_id)
