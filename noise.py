@@ -41,11 +41,7 @@ class Noise_():
         for i in range(N):
             noise_rt[i] = self.local_gen.normal(0, row_sums[i])
             unit_Conductance_rt[i] = self.local_gen.normal(0, 1)
-        print(self.A_actual)
-        print(n0)
         A_actual_inv = np.linalg.inv(self.A_actual)
-        print(A_actual_inv @ noise_rt)
-        print(A_actual_inv @ unit_Conductance_rt)
         V_out = V_out + n0 * (A_actual_inv @ noise_rt + A_actual_inv @ unit_Conductance_rt)
         return V_out
 
