@@ -2,18 +2,18 @@
 circuit parameter
 '''
 
-N_SIZE = 5                      # Replace with your desired value for N (size of matrix)
+N_SIZE = 32                      # Replace with your desired value for N (size of matrix)
 ROW_PINV = 6                    # number of rows of pinv
 COL_PINV = 4                    # number of columns of pinv
 NUM_V = 5                       # number of input voltage vectors in mvm
-NUM_I = 5                       # number of input current vectors in inv or pinv
-NUM_MATRIX = 5                  # number of input conductance matrices
+NUM_I = 2                       # number of input current vectors in inv or pinv
+NUM_MATRIX = 4                  # number of input conductance matrices
 INPUT_PATH = r"inputFile"
 NETLIST_PATH = r"NetlistFile"
 OUTPUT_PATH = r"outputFile"
 LTSPICE_EXE = r"E:\LTSpice\LTspice.exe"     # path of LTspice
 
-OPA=1
+OPA = 1
 '''
     0  LT1001
     1  AD823
@@ -21,7 +21,7 @@ OPA=1
     3  AD8606 (cmos)
 '''
 
-CIRCUIT=1
+CIRCUIT = 1
 '''
 0  mvm
 1  inv
@@ -29,7 +29,7 @@ CIRCUIT=1
 3  CC-RS mvm
 '''
 
-NEG_WEIGHT=0
+NEG_WEIGHT = 0
 '''
 0  false
 1  true
