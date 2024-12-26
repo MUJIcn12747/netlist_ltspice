@@ -142,12 +142,15 @@ if __name__=='__main__':
                     RESULT_VERIFY_DIR = os.path.join(inv_folder, f"cmp{i}")
                     os.makedirs(RESULT_VERIFY_DIR, exist_ok=True)
 
+                    x_out = np.zeros_like(V_out)
                     for j in range(num_I):
-                        x_out = V_out[j] * np.max(I[j]) / (alpha_inv * np.max(A))
-                        I_test = np.dot(A, x_out)
+                        x_out[j] = V_out[j] * np.max(I[j]) / (alpha_inv * np.max(A))
+                        I_test = np.dot(A, x_out[j])
                         # I_test = I_test * I[j, 0] / I_test[0]
                         RESULT_VERIFY_FILE = os.path.join(RESULT_VERIFY_DIR, f"{j+1}.txt")
                         INV_result_verify(I_test, I[j], RESULT_VERIFY_FILE)
+
+                    # INV_result(x_out, num_I, OUTPUT_FILE)                                   # result of inv
                 E=time.time()
                 print(E-S)
 
@@ -176,8 +179,6 @@ if __name__=='__main__':
                         pinv_ideal=np.dot(pinv_ideal, A.T)
                         pinv_ideal=np.dot(pinv_ideal, I[j])
                         V_out[j] = V_out[j] * pinv_ideal[0] / V_out[j, 0]
-                        # I_test = np.dot(A, V_out[j])
-                        # I_test = I_test * I[j, 0] / I_test[0]
                         RESULT_VERIFY_FILE = os.path.join(RESULT_VERIFY_DIR, f"{j+1}.txt")
                         PINV_result_verify(V_out[j], pinv_ideal, RESULT_VERIFY_FILE)
                 E=time.time()

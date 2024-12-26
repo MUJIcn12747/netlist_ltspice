@@ -15,7 +15,7 @@ import time
 import matplotlib.pyplot as plt
 import PyLTSpice 
 from parameters import LTSPICE_EXE
-from parameters import OPA,CIRCUIT,NEG_WEIGHT, maxConductance
+from parameters import OPA,CIRCUIT,NEG_WEIGHT, maxConductance, Add_Noise
 
 '''
 在parameters.py中修改电路参数
@@ -74,7 +74,8 @@ def Get_Results(INPUT_FILE, NETLIST_DIR, CIRCUIT):
                 A_actual = Build_inv(N, A.copy(), I[i].copy(), NETLIST_FILE, opa_id=OPA, NEG_WEIGHT=NEG_WEIGHT)
                 RAW_FILE=run_ltspice(NETLIST_FILE)
                 V = read_voltage_inv(N, RAW_FILE)
-                V = Overall_output_noise(A_actual, V, N, maxConductance)                             # attach noise model to output vector
+                if Add_Noise:
+                    V = Overall_output_noise(A_actual, V, N, maxConductance)                             # attach noise model to output vector
                 V_matrix.append(V)                                      # Append the current V vector to the list
             
             V_matrix = np.array(V_matrix)                               # Convert the list of vectors into a NumPy array (num_I x N matrix)

@@ -2,12 +2,12 @@
 circuit parameter
 '''
 
-N_SIZE = 32                      # Replace with your desired value for N (size of matrix)
+N_SIZE = 16                      # Replace with your desired value for N (size of matrix)
 ROW_PINV = 6                    # number of rows of pinv
 COL_PINV = 4                    # number of columns of pinv
 NUM_V = 5                       # number of input voltage vectors in mvm
-NUM_I = 2                       # number of input current vectors in inv or pinv
-NUM_MATRIX = 4                  # number of input conductance matrices
+NUM_I = 4                       # number of input current vectors in inv or pinv
+NUM_MATRIX = 8                  # number of input conductance matrices
 INPUT_PATH = r"inputFile"
 NETLIST_PATH = r"NetlistFile"
 OUTPUT_PATH = r"outputFile"
@@ -46,7 +46,7 @@ num_Bit = 10
 sigma_QW = 1 * 1e-6
 unit_Current = 200 * 1e-6                   # Maximum input current (A)
 unit_Voltage = 0.2                          # Maximum input voltage (V)
-alpha_inv = 0.01                            # Scaling factor for input of inv
+alpha_inv = 0.001                            # Scaling factor for input of inv
 
 InterConnection_Resistor=0   
 Row_InterConnection_Resistor=0 
@@ -55,6 +55,7 @@ Column_InterConnection_Resistor=0
 '''
 Noise model
 '''
+Add_Noise = False
 Boltzmann_k = 1.38e-23
 Temperature = 300               # Temperature in Kelvin (example value)
 Circuit_Bandwidth = 1e6         # Bandwidth in Hz (example value)
