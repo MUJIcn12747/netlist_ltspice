@@ -1,6 +1,6 @@
 # Version:
 
-***Update Date:***
+***Update Date: yy/mm/dd***
 
 ## Added
 -
