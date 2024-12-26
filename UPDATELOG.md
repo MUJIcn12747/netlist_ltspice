@@ -1,5 +1,5 @@
 # Version:
-* Update Date: *
+_Update Date: _
 
 ## Added
 -
