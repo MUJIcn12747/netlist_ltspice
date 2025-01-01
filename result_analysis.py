@@ -44,14 +44,16 @@ def INV_result(V_out, num_V, write_path):
             # Write the elements of the row to the file, separated by spaces
             file.write(" ".join([f"{value:.6f}" for value in row]) + "\n")
 
-def INV_stability_check(eigenvalues, positive_flag, positive_check_file):
-    with open(positive_check_file, "w") as file:
-            for value in eigenvalues:
-                file.write(f"{value}\n")
-            if positive_flag:
-                file.write("The real parts of all eigenvalues are positive\n")
-            else:
-                file.write("Not all eigenvalues have positive real part\n")
+def INV_stability_check(eigenvalues, positive_flag, condition_number, matrix_check_file):
+    with open(matrix_check_file, "w") as file:
+        file.write("Eigenvalues of the actual matrix M = UA:\n")
+        for value in eigenvalues:
+            file.write(f"{value}\n")
+        if positive_flag:
+            file.write("The real parts of all eigenvalues are positive\n")
+        else:
+            file.write("Not all eigenvalues have positive real part\n")
+        file.write(f"Condition numbers of the actual matrix A: {condition_number}\n")
 
 def INV_result_verify(I_test, I_ideal, write_path):
     with open(write_path, 'w') as file:
@@ -121,22 +123,23 @@ if __name__=='__main__':
                     NETLIST_DIR_INV = os.path.join(NETLIST_PATH, 'inv',f"sp{i}")
                     os.makedirs(NETLIST_DIR_INV, exist_ok=True)
 
-                    V_out, N, A, I, num_I = Get_Results(INPUT_FILE, NETLIST_DIR_INV, CIRCUIT=1)
+                    V_out, N, A, I, num_I, A_actual = Get_Results(INPUT_FILE, NETLIST_DIR_INV, CIRCUIT=1)
 
-                    eigenvalues, positive_flag = check_positive_real_eigenvalues(A)
+                    eigenvalues, positive_flag = check_positive_real_eigenvalues(A_actual)
+                    condition_number = np.linalg.cond(A_actual)
                     if not positive_flag:
                         print(f"Negative or non-real eigenvalue encountered at matrix {i}. Exiting simulation{i}.")
                         inv_folder = os.path.join(OUTPUT_PATH, 'inv')
                         os.makedirs(inv_folder, exist_ok=True)
-                        POSITIVE_CHECK_FILE = os.path.join(inv_folder, f"positive_check{i}.txt")
-                        INV_stability_check(eigenvalues, positive_flag, POSITIVE_CHECK_FILE)
+                        MATRIX_CHECK_FILE = os.path.join(inv_folder, f"matrix_check{i}.txt")
+                        INV_stability_check(eigenvalues, positive_flag, condition_number, MATRIX_CHECK_FILE)
                         continue
 
                     inv_folder = os.path.join(OUTPUT_PATH, 'inv')
                     os.makedirs(inv_folder, exist_ok=True)
                     OUTPUT_FILE = os.path.join(inv_folder, f"{i}.txt")
-                    POSITIVE_CHECK_FILE = os.path.join(inv_folder, f"positive_check{i}.txt")
-                    INV_stability_check(eigenvalues, positive_flag, POSITIVE_CHECK_FILE)
+                    MATRIX_CHECK_FILE = os.path.join(inv_folder, f"matrix_check{i}.txt")
+                    INV_stability_check(eigenvalues, positive_flag, condition_number, MATRIX_CHECK_FILE)
                     INV_result(V_out, num_I, OUTPUT_FILE)                                   # result of inv
 
                     RESULT_VERIFY_DIR = os.path.join(inv_folder, f"cmp{i}")

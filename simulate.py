@@ -8,6 +8,7 @@ from NetlistBuilder import Build_pinv
 from NetlistBuilder import Read_Param_pinv
 from rawread import read_voltage_inv,read_voltage_mvm,read_voltage_pinv
 from positive_eig_check import check_positive_real_eigenvalues
+from Mapping import InputVector_to_InputVoltage, Mapping_inv_pos, Mapping_inv_neg
 from noise import Overall_output_noise
 import subprocess
 import os
@@ -54,33 +55,38 @@ def Get_Results(INPUT_FILE, NETLIST_DIR, CIRCUIT):
                 Build_mvm(N, A.copy(), V[i].copy(), NETLIST_FILE, opa_id=OPA, NEG_WEIGHT=NEG_WEIGHT)
                 RAW_FILE=run_ltspice(NETLIST_FILE)
                 mvm_result=read_voltage_mvm(N, RAW_FILE)
-                result_matrix.append(mvm_result)              # Append the current V vector to the list
+                result_matrix.append(mvm_result)                # Append the current V vector to the list
             
-            result_matrix = np.array(result_matrix)       # Convert the list of vectors into a NumPy array (num_I x N matrix)
+            result_matrix = np.array(result_matrix)             # Convert the list of vectors into a NumPy array (num_I x N matrix)
             return result_matrix, N, A, V, num_V
         
         case 1: #inv
-            N, A, I, num_I=Read_Param_inv(INPUT_FILE)
+            N, A, vector_b, num_I=Read_Param_inv(INPUT_FILE)
 
-            V_matrix = []
-            eigenvalues, positive_flag = check_positive_real_eigenvalues(A)
-
-            if not positive_flag:
-                return V_matrix, N, A, I, num_I
+            V_out = []
+            if (NEG_WEIGHT==0):
+                A_actual, R, R2 = Mapping_inv_pos(N, A.copy())
+            else:                                                       # real matrix with negative values
+                A_actual, R, R2 = Mapping_inv_neg(N, A.copy())
 
             for i in range(num_I):
                 # Generate the file path for the netlist
                 NETLIST_FILE = os.path.join(NETLIST_DIR, f"{i+1}.cir")
-                A_actual = Build_inv(N, A.copy(), I[i].copy(), NETLIST_FILE, opa_id=OPA, NEG_WEIGHT=NEG_WEIGHT)
+                V_in = InputVector_to_InputVoltage(vector_b[i].copy())
+                Build_inv(N, R, R2, V_in, NETLIST_FILE, opa_id=OPA, NEG_WEIGHT=NEG_WEIGHT)
+
+                eigenvalues, positive_flag = check_positive_real_eigenvalues(A_actual)
+                if not positive_flag:
+                    return V_out, N, A, vector_b, num_I, A_actual
+                
                 RAW_FILE=run_ltspice(NETLIST_FILE)
                 V = read_voltage_inv(N, RAW_FILE)
                 if Add_Noise:
                     V = Overall_output_noise(A_actual, V, N, maxConductance)                             # attach noise model to output vector
-                V_matrix.append(V)                                      # Append the current V vector to the list
+                V_out.append(V)                                      # Append the current V vector to the list
             
-            V_matrix = np.array(V_matrix)                               # Convert the list of vectors into a NumPy array (num_I x N matrix)
-            # print(V_matrix)
-            return V_matrix, N, A, I, num_I
+            V_out = np.array(V_out)                               # Convert the list of vectors into a NumPy array (num_I x N matrix)
+            return V_out, N, A, vector_b, num_I, A_actual
 
         case 2: #pinv
             N, M, A, I, num_I=Read_Param_pinv(INPUT_FILE)

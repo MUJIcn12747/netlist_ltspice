@@ -39,8 +39,8 @@ class RRAM_:
             # self.conductance = (normalized_value - 0) * (self.maxConductance - self.minConductance) / (1 - 0) + self.minConductance
             # self.conductance = normalized_value * (self.maxConductance - self.minConductance) + self.minConductance
             self.conductance = normalized_value * self.maxConductance
-            if self.conductance < self.minConductance:
-                self.conductance = self.minConductance
+            # if self.conductance < self.minConductance:
+            #     self.conductance = self.minConductance
             self.conductance = self.local_gen.normal(self.conductance, self.error_range_AM)
         else:
             conductance_interval = (self.maxConductance - self.minConductance) / (self.num_level - 1)
@@ -49,10 +49,10 @@ class RRAM_:
             self.conductance = self.local_gen.normal(self.conductance, self.sigma_QW)
 
         # Ensure the conductance is within the valid range 
-        if self.conductance > self.maxConductance:
-            self.conductance = self.maxConductance
-        elif self.conductance < self.minConductance:
-            self.conductance = self.minConductance
+        # if self.conductance > self.maxConductance:
+        #     self.conductance = self.maxConductance
+        # elif self.conductance < self.minConductance:
+        #     self.conductance = self.minConductance
 
         return self.conductance
     
