@@ -1,7 +1,7 @@
 import random
 import os
 import numpy as np
-from parameters import N_SIZE,ROW_PINV,COL_PINV,NUM_V,NUM_I,NUM_MATRIX,INPUT_PATH, CIRCUIT
+from parameters import MIN_VALUE, MAX_VALUE, N_SIZE,ROW_PINV,COL_PINV,NUM_V,NUM_I,NUM_MATRIX,INPUT_PATH, CIRCUIT
 from formula import generate_diagonal_dominant_matrix, generate_positive_definite_matrix
 
 def generate_numbers(N, row_pinv, col_pinv, num_V, num_I, num_Matrix, output_dir=INPUT_PATH):
@@ -45,8 +45,10 @@ def generate_numbers(N, row_pinv, col_pinv, num_V, num_I, num_Matrix, output_dir
                     # Write the first line: the number N
                     file.write(f"{N}\n")
             
-                    # A = generate_positive_definite_matrix(N)
-                    A = generate_diagonal_dominant_matrix(N)
+                    A = generate_positive_definite_matrix(N, MIN_VALUE, MAX_VALUE)
+                    # A = generate_diagonal_dominant_matrix(N, MIN_VALUE, MAX_VALUE)
+                    # condition_number = np.linalg.cond(A)
+                    # print(condition_number)
 
                     # Write the matrix to the file
                     for row in A:

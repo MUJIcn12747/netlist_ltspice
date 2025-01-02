@@ -1,13 +1,18 @@
 '''
-circuit parameter
+input parameter
 '''
-
+MIN_VALUE = 1
+MAX_VALUE = 4
 N_SIZE = 64                      # Replace with your desired value for N (size of matrix)
 ROW_PINV = 6                    # number of rows of pinv
 COL_PINV = 4                    # number of columns of pinv
 NUM_V = 5                       # number of input voltage vectors in mvm
 NUM_I = 2                       # number of input current vectors in inv or pinv
 NUM_MATRIX = 4                  # number of input conductance matrices
+
+'''
+file path
+'''
 INPUT_PATH = r"inputFile"
 NETLIST_PATH = r"NetlistFile"
 OUTPUT_PATH = r"outputFile"
