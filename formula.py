@@ -26,6 +26,12 @@ def generate_positive_definite_matrix(N, min_value, max_value, scale=1.0):
         for i in range(N):
             A[i, i] += random.uniform(min_value, max_value)
 
+    # To further improve the condition number, ensure the eigenvalues are closer together
+    eigenvalues = np.linalg.eigvals(A)
+    min_eigenvalue = np.min(eigenvalues)
+    if min_eigenvalue < 1e-5:  # If smallest eigenvalue is very small, increase it
+        A += np.eye(N) * abs(min_eigenvalue) * 10
+
     return A
 
 # Generate a diagonal dominant matrix

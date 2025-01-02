@@ -45,8 +45,8 @@ def generate_numbers(N, row_pinv, col_pinv, num_V, num_I, num_Matrix, output_dir
                     # Write the first line: the number N
                     file.write(f"{N}\n")
             
-                    A = generate_positive_definite_matrix(N, MIN_VALUE, MAX_VALUE)
-                    # A = generate_diagonal_dominant_matrix(N, MIN_VALUE, MAX_VALUE)
+                    A = generate_positive_definite_matrix(N, max_value, min_value)
+                    # A = generate_diagonal_dominant_matrix(N, max_value, min_value)
                     # condition_number = np.linalg.cond(A)
                     # print(condition_number)
 
@@ -79,6 +79,8 @@ def generate_numbers(N, row_pinv, col_pinv, num_V, num_I, num_Matrix, output_dir
             case _:break 
 
 # Example usage
+max_value = MAX_VALUE
+min_value = MIN_VALUE
 N = N_SIZE                   # Replace with your desired value for N (size of matrix)
 row_pinv = ROW_PINV
 col_pinv = COL_PINV

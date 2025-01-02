@@ -3,7 +3,7 @@ input parameter
 '''
 MIN_VALUE = 1
 MAX_VALUE = 4
-N_SIZE = 64                      # Replace with your desired value for N (size of matrix)
+N_SIZE = 16                      # Replace with your desired value for N (size of matrix)
 ROW_PINV = 6                    # number of rows of pinv
 COL_PINV = 4                    # number of columns of pinv
 NUM_V = 5                       # number of input voltage vectors in mvm
