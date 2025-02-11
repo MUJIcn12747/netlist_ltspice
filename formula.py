@@ -60,6 +60,6 @@ def Calculate_diag_matrixU(matrix_A):
     matrix_U = np.diag(1 / (1 + row_sums))
     return matrix_U
 
-def Calculate_RT_n0(Boltzmann_k, Temperature, Circuit_Bandwidth, R0):
-    n0 = np.sqrt(4 * Boltzmann_k * Temperature * Circuit_Bandwidth * R0)
-    return n0
+def Calculate_Thermal_noise(Boltzmann_k, Temperature, Circuit_Bandwidth, R):
+    noise = np.sqrt(4 * Boltzmann_k * Temperature * Circuit_Bandwidth * R)
+    return noise

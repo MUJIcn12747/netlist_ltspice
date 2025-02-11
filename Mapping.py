@@ -11,6 +11,7 @@ def Array_RealDevice_Update(A, N, M):
         for j in range(M):
             # 对每个元素应用 Write 函数
             A_actual[i, j] = rram.Write(A[i, j], max_value, min_value)
+    # print(A_actual)
     return A_actual
 
 def InputVector_to_InputVoltage(vector_b):

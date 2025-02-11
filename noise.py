@@ -4,7 +4,7 @@ import subprocess
 import os
 import time
 from parameters import Boltzmann_k, Temperature, Circuit_Bandwidth, sigma_FC, sigma_OA
-from formula import Calculate_RT_n0, Calculate_diag_matrixU
+from formula import Calculate_Thermal_noise, Calculate_diag_matrixU
 
 class Noise_():
     def __init__(
@@ -33,13 +33,13 @@ class Noise_():
         unit_Conductance
     ):
         R0 = 1 / unit_Conductance
-        n0 = Calculate_RT_n0(Boltzmann_k, Temperature, Circuit_Bandwidth, R0)
+        n0 = Calculate_Thermal_noise(Boltzmann_k, Temperature, Circuit_Bandwidth, R0)
 
         noise_rt = np.zeros_like(V_out)
         unit_Conductance_rt = np.zeros_like(V_out)
         row_sums = np.sum(self.A_actual, axis=1)
         for i in range(N):
-            noise_rt[i] = self.local_gen.normal(0, row_sums[i])
+            noise_rt[i] = self.local_gen.normal(0, np.sqrt(row_sums[i]))
             unit_Conductance_rt[i] = self.local_gen.normal(0, 1)
         A_actual_inv = np.linalg.inv(self.A_actual)
         V_out = V_out + n0 * (A_actual_inv @ noise_rt + A_actual_inv @ unit_Conductance_rt)

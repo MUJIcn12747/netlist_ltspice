@@ -1,12 +1,14 @@
-from cells import res_,opas_,idcs_,vdcs_
+from cells import res_,opas_,idcs_,vdcs_, vPWL_
 import numpy as np
+from parameters import T_MIN, T_MAX
 
 class Circuit_():
-    res_list=[]
-    opa_list=[]
-    idc_list=[]
-    vdc_list=[]
-    lib_list=[]
+    res_list = []
+    opa_list = []
+    idc_list = []
+    vdc_list = []
+    vPWL_list = []
+    lib_list = []
 
     def __init__(self):
         pass
@@ -27,6 +29,10 @@ class Circuit_():
         idc=idcs_(id,node_pos,node_neg,value)
         self.idc_list.append(idc)
 
+    def add_vPWL(self, id, node_pos, node_neg):
+        vPWL = vPWL_(id, node_pos, node_neg)
+        self.vPWL_list.append(vPWL)
+
     def add_lib(self,lib_name):
         self.lib_list.append(lib_name)
 
@@ -41,9 +47,11 @@ class Circuit_():
                 file.write(vdcs.netlist_format())
             for idcs in self.idc_list:
                 file.write(idcs.netlist_format())
+            for vPWL in self.vPWL_list:
+                file.write(vPWL.netlist_format())
             for libs in self.lib_list:
                 file.write('.lib '+libs+'.lib\n')
-            file.write('.tran 1n 10u\n')
+            file.write(f'.tran {T_MIN} {T_MAX}\n')
             file.write('.backanno\n')
             file.write('.end\n')
         file.close()
@@ -53,4 +61,5 @@ class Circuit_():
         self.opa_list.clear()
         self.idc_list.clear()
         self.vdc_list.clear()
+        self.vPWL_list.clear()
         self.lib_list.clear()

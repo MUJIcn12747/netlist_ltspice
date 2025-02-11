@@ -2,8 +2,8 @@
 input parameter
 '''
 MIN_VALUE = 1
-MAX_VALUE = 4
-N_SIZE = 16                      # Replace with your desired value for N (size of matrix)
+MAX_VALUE = 2
+N_SIZE = 3                      # Replace with your desired value for N (size of matrix)
 ROW_PINV = 6                    # number of rows of pinv
 COL_PINV = 4                    # number of columns of pinv
 NUM_V = 5                       # number of input voltage vectors in mvm
@@ -16,6 +16,7 @@ file path
 INPUT_PATH = r"inputFile"
 NETLIST_PATH = r"NetlistFile"
 OUTPUT_PATH = r"outputFile"
+NOISE_PATH = r"NoiseFile"
 LTSPICE_EXE = r"E:\LTSpice\LTspice.exe"     # path of LTspice
 
 OPA = 1
@@ -46,7 +47,7 @@ Cell model
 maxConductance = 200 * 1e-6		    # Maximum cell conductance (S)
 minConductance = 5 * 1e-6	        # Minimum cell conductance (S)
 AM_or_QM = True
-error_range_AM = 1 * 1e-6
+error_range_AM = 0.1 * 1e-6
 num_Bit = 10
 sigma_QW = 1 * 1e-6
 unit_Current = 200 * 1e-6                   # Maximum input current (A)
@@ -62,7 +63,13 @@ Noise model
 '''
 Add_Noise = True
 Boltzmann_k = 1.38e-23
-Temperature = 300               # Temperature in Kelvin (example value)
-Circuit_Bandwidth = 1e6         # Bandwidth in Hz (example value)
-sigma_FC = 1e-10
-sigma_OA = 1e-10
+Temperature = 300                       # Temperature in Kelvin (example value)
+Circuit_Bandwidth = 100 * 1e6           # Bandwidth in Hz (example value)
+sigma_FC = 0 * 1e-10
+sigma_OA = 0 * 1e-10
+
+'''
+SPICE parameter
+'''
+T_MIN = 10 * 1e-9                           # step of time (unit: s)
+T_MAX = 100 * 1e-6                          # maximum time of simulation (unit: s)

@@ -1,3 +1,5 @@
+from parameters import NOISE_PATH
+
 class res_():
     value=0
     node1=0
@@ -75,4 +77,20 @@ class idcs_():
         node_name_pos = ("N" + str(self.node_pos).zfill(3)) if (self.node_pos!=0) else '0'
         node_name_neg = ("N" + str(self.node_neg).zfill(3)) if (self.node_neg!=0) else '0'
         format = f"I{self.id} {node_name_pos} {node_name_neg} {self.value}\n"
+        return format
+    
+class vPWL_(): 
+    id=0
+    node_pos=0
+    node_neg=0
+
+    def __init__(self,id,node_pos,node_neg):
+        self.id=id
+        self.node_pos=node_pos
+        self.node_neg=node_neg
+    
+    def netlist_format(self):
+        node_name_pos = ("N" + str(self.node_pos).zfill(3)) if (self.node_pos!=0) else '0'
+        node_name_neg = ("N" + str(self.node_neg).zfill(3)) if (self.node_neg!=0) else '0'
+        format = f"VPWL{self.id} {node_name_pos} {node_name_neg} PWL(file=randNoise{self.id}.txt)\n"
         return format

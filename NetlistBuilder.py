@@ -411,6 +411,78 @@ def Build_pinv(N, M, A, I, write_path, opa_id=0, NEG_WEIGHT=0):
     circuit.generate_netlist_file(write_path)
     circuit.clear()
 
+def Build_inv_randNoise(N, R, R2, V_in, write_path, opa_id=0, NEG_WEIGHT=0):
+    circuit=Circuit_()
+    opa=opa_(opa_id)
+    R_ = 100000
+
+    for i in range(N):
+        for j in range(N):
+            r_num = N*i+j+1
+            up_node = j+6*N+i*N+1
+            down_node = i+1
+            circuit.add_res(r_num, up_node, down_node, R[i][j])
+
+            vPWL_num = N*i+j+1
+            pos_node = j+6*N+i*N+1
+            neg_node = j+N+1
+            circuit.add_vPWL(vPWL_num, pos_node, neg_node)
+
+    for i in range(N):                                                  # unit conductance
+        r_num = '0' + str(i)
+        up_node = i+5*N+1
+        down_node = i+1
+        circuit.add_res(r_num, up_node, down_node, 1/maxConductance)
+
+        vPWL_num = '0' + str(i)
+        pos_node = i+5*N+1
+        neg_node = i+2*N+1
+        circuit.add_vPWL(vPWL_num, pos_node, neg_node)
+
+    for i in range(N):
+        node = i+2*N+1
+        circuit.add_vdc(i+1, node, 0, V_in[i])
+
+    voltage=opa.work_voltage()
+
+    circuit.add_vdc(999,999,0,voltage)
+    circuit.add_vdc(998,0,998,voltage)
+
+    for i in range(N):
+        node_in=i+1
+        node_out=i+N+1
+        circuit.add_opa(i+1,0,node_in,999,998,node_out,opa.name())
+
+    if (NEG_WEIGHT==1):
+        '''写入第二个阵列的电阻'''
+        for i in range (N):
+            for j in range(N):
+                r_num=N*i+j+1+N*N
+                up_node=j+3*N+1
+                down_node=i+1
+                circuit.add_res(r_num,up_node,down_node,R2[i][j])
+
+        '''写入模拟反相器, 电阻为1MΩ'''
+        for i in range(N):#写入输入端电阻
+            r_num=i+1+2*N*N
+            up_node=i+N+1
+            down_node=i+4*N+1
+            circuit.add_res(r_num,up_node,down_node,R_)         
+        for i in range(N):#写入输出端电阻
+            r_num=N+i+1+2*N*N
+            up_node=i+3*N+1
+            down_node=i+4*N+1
+            circuit.add_res(r_num,up_node,down_node,R_)
+        for i in range(N):#写入运放    
+            node_in=4*N+i+1
+            node_out=i+3*N+1
+            circuit.add_opa(i+1+N,0,node_in,999,998,node_out,opa.name())
+
+    circuit.add_lib('LTC')
+    circuit.add_lib('ADI')
+    circuit.generate_netlist_file(write_path)
+    circuit.clear()
+
 if __name__=='__main__':
     Build_pinv('param_pinv.txt','pinv.cir',1)
 
