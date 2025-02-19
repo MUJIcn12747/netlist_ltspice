@@ -9,7 +9,7 @@ import parameters as param
 from OPAS import opa_
 from Circuit import Circuit_
 from parameters import maxConductance, minConductance, AM_or_QM, error_range_AM, num_Bit, sigma_QW, unit_Current, unit_Voltage, alpha_inv
-from Mapping import Array_RealDevice_Update, InputVector_to_InputVoltage
+from Mapping import INV_RealDevice_Update, InputVector_to_InputVoltage
 '''输入文件:inputFile\i.txt
    输入格式:第一行矩阵规模N
             之后N*N权重电导
@@ -129,6 +129,33 @@ def Read_Param_pinv(file_path):
         print(f"Read File Error: {e}")
         return None
 
+def Read_Param_eig(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            tmp = file.readline().strip()
+            N=int(tmp)
+
+            if N <= 0:
+                raise ValueError("Array Size Error")
+            data = []
+
+            for i in range(N):
+                line = file.readline().strip()
+                numbers = list(map(float, line.split()))
+
+                if len(numbers) != N:
+                    raise ValueError("Array Number Error")
+                data.append(numbers)
+            A=np.array(data)
+
+            eig_lambda = [float(line.strip()) for line in file]
+            num_eig = len(eig_lambda)
+            return N, A, eig_lambda, num_eig
+    
+    except Exception as e:
+        print(f"Read File Error: {e}")
+        return None
+
 def Build_inv(N, R, R2, V_in, write_path, opa_id=0, NEG_WEIGHT=0):
     circuit=Circuit_()
     opa=opa_(opa_id)
@@ -196,7 +223,7 @@ def Build_mvm(N, A, V, write_path, opa_id=0, NEG_WEIGHT=0):
     opa=opa_(opa_id)
 
     if (NEG_WEIGHT==0):                     # attach device model to conductance
-        A_actual = Array_RealDevice_Update(A,N,N)
+        A_actual = INV_RealDevice_Update(A,N,N)
         A = 1 / A_actual                   # convert conductance to resistance
         V = V * unit_Voltage / np.max(V)
     else:                                   # real matrix with negative values
@@ -274,7 +301,7 @@ def Build_CCRS_mvm(N, A, V, write_path, opa_id=0):
         combined_conductance=combined_conductance+g_max/9
     
     #print(combined_conductance)
-    updated_combined_conductance=Array_RealDevice_Update(combined_conductance,N*2+2,N)
+    updated_combined_conductance=INV_RealDevice_Update(combined_conductance,N*2+2,N)
     A=1/updated_combined_conductance[:N,:]
     A2=1/updated_combined_conductance[N:2*N,:]
     g_row=1/updated_combined_conductance[2*N,:]
@@ -331,7 +358,7 @@ def Build_pinv(N, M, A, I, write_path, opa_id=0, NEG_WEIGHT=0):
     circuit=Circuit_()
 
     if (NEG_WEIGHT==0):                     # attach device model to conductance
-        updated_A = Array_RealDevice_Update(A,N,M)
+        updated_A = INV_RealDevice_Update(A,N,M)
         A = 1 / updated_A                   # convert conductance to resistance
         I = I * unit_Current / np.max(I)
     else:                                   # real matrix with negative values
@@ -350,7 +377,7 @@ def Build_pinv(N, M, A, I, write_path, opa_id=0, NEG_WEIGHT=0):
         #print(g_max,g_min)
         if (g_max/g_min>maxConductance/minConductance):
             A_combined=A_combined+g_max/9
-        updated_A = Array_RealDevice_Update(A_combined,2*N,M)
+        updated_A = INV_RealDevice_Update(A_combined,2*N,M)
         A = 1 / updated_A[:N,:] 
         A2 = 1 / updated_A[N:,:]            
         I = I * unit_Current / np.max(I)
@@ -405,6 +432,80 @@ def Build_pinv(N, M, A, I, write_path, opa_id=0, NEG_WEIGHT=0):
         node_out=i+1+N
         circuit.add_opa(i+1+N,node_in_pos,node_in_neg,999,998,node_out,opa.name())
     
+
+    circuit.add_lib('LTC')
+    circuit.add_lib('ADI')
+    circuit.generate_netlist_file(write_path)
+    circuit.clear()
+
+def Build_eig(N, R, R2, G_lambda, write_path, opa_id=0, NEG_WEIGHT=0):
+    circuit=Circuit_()
+    opa=opa_(opa_id)
+    R_ = 100000
+
+    for i in range(N):
+        for j in range(N):
+            r_num = N*i+j+1
+            up_node = j+N+1
+            down_node = i+1
+            circuit.add_res(r_num,up_node,down_node,R[i][j])
+
+    for i in range(N):                                                  # TIA conductance: G_lambda
+        r_num = '0' + str(i)
+        up_node = i+1
+        down_node = i+2*N+1
+        circuit.add_res(r_num, up_node, down_node, 1/G_lambda)
+
+    voltage = opa.work_voltage()
+
+    circuit.add_vdc(999,999,0,voltage)
+    circuit.add_vdc(998,0,998,voltage)
+
+    for i in range(N):
+        node_in = i+1
+        node_out = i+2*N+1
+        circuit.add_opa(i+1,0,node_in,999,998,node_out,opa.name())
+
+    if (NEG_WEIGHT==0):
+        '''Analog inverter, R=1MΩ'''
+        for i in range(N):          #input R
+            r_num=i+1+2*N*N
+            up_node=i+2*N+1
+            down_node=i+4*N+1
+            circuit.add_res(r_num,up_node,down_node,R_)         
+        for i in range(N):          #output R
+            r_num=N+i+1+2*N*N
+            up_node=i+N+1
+            down_node=i+4*N+1
+            circuit.add_res(r_num,up_node,down_node,R_)
+        for i in range(N):          #opa    
+            node_in=4*N+i+1
+            node_out=i+N+1
+            circuit.add_opa(i+1+N,0,node_in,999,998,node_out,opa.name())
+    else:
+        '''The second array'''
+        for i in range (N):
+            for j in range(N):
+                r_num=N*i+j+1+N*N
+                up_node=j+3*N+1
+                down_node=i+1
+                circuit.add_res(r_num,up_node,down_node,R2[i][j])
+
+        '''Analog inverter, R=1MΩ'''
+        for i in range(N):#写入输入端电阻
+            r_num=i+1+2*N*N
+            up_node=i+N+1
+            down_node=i+4*N+1
+            circuit.add_res(r_num,up_node,down_node,R_)         
+        for i in range(N):#写入输出端电阻
+            r_num=N+i+1+2*N*N
+            up_node=i+3*N+1
+            down_node=i+4*N+1
+            circuit.add_res(r_num,up_node,down_node,R_)
+        for i in range(N):#写入运放    
+            node_in=4*N+i+1
+            node_out=i+3*N+1
+            circuit.add_opa(i+1+N,0,node_in,999,998,node_out,opa.name())
 
     circuit.add_lib('LTC')
     circuit.add_lib('ADI')

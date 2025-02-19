@@ -3,11 +3,12 @@ input parameter
 '''
 MIN_VALUE = 1
 MAX_VALUE = 2
-N_SIZE = 3                      # Replace with your desired value for N (size of matrix)
+N_SIZE = 64                     # Replace with your desired value for N (size of matrix)
 ROW_PINV = 6                    # number of rows of pinv
 COL_PINV = 4                    # number of columns of pinv
 NUM_V = 5                       # number of input voltage vectors in mvm
 NUM_I = 2                       # number of input current vectors in inv or pinv
+NUM_EIG = 1                     # number of eigenvalues in eig
 NUM_MATRIX = 4                  # number of input conductance matrices
 
 '''
@@ -27,15 +28,21 @@ OPA = 1
     3  AD8606 (cmos)
 '''
 
-CIRCUIT = 1
+CIRCUIT = 3
 '''
 0  mvm
 1  inv
 2  pinv
-3  CC-RS mvm
+3  eig
 '''
 
 NEG_WEIGHT = 0
+'''
+0  false
+1  true
+'''
+
+NEG_EIGENVALUE = 0
 '''
 0  false
 1  true
@@ -61,7 +68,7 @@ Column_InterConnection_Resistor=0
 '''
 Noise model
 '''
-Add_Noise = True
+Add_Noise = False
 Boltzmann_k = 1.38e-23
 Temperature = 300                       # Temperature in Kelvin (example value)
 Circuit_Bandwidth = 100 * 1e6           # Bandwidth in Hz (example value)

@@ -81,9 +81,27 @@ def PINV_result_verify(V_test, V_ideal, write_path):
             j_str = f"{round(j, 6):.6f}"[:10]  # 同上
             file.write(f"{i_str.ljust(10)} {j_str.ljust(10)}\n")
 
+def EIG_result(V_out, num_eig, write_path, eig_val):
+    with open(write_path, "w") as file:
+        file.write(f"Corresponding eigenvalue: {eig_val}\n")
+        for i in range(num_eig):
+            # Get the i-th row of V_out
+            row = V_out[i]
+            # Write the elements of the row to the file, separated by spaces
+            file.write(" ".join([f"{value:.6f}" for value in row]) + "\n")
+
+def EIG_result_verify(x_test, x_ideal, write_path, eig_val):
+    with open(write_path, 'w') as file:
+        file.write('ideal      test\n')
+
+        for i, j in zip(x_ideal, x_test):
+            i_str = f"{round(i, 6):.6f}"[:10]  # 最多保留6位小数，截断到10字符
+            j_str = f"{round(j, 6):.6f}"[:10]  # 同上
+            file.write(f"{i_str.ljust(10)} {j_str.ljust(10)}\n")
+
 if __name__=='__main__':
     while(True):
-        lines = ["Please choose a specific circuit for computing:", "0--mvm", "1--inv", "2--pinv"]
+        lines = ["Please choose a specific circuit for computing:", "0--mvm", "1--inv", "2--pinv", "3--eig"]
         text = "\n".join(lines)
         print(text)
         cir=int(input())
@@ -187,5 +205,52 @@ if __name__=='__main__':
                 E=time.time()
                 print(E-S)
 
+            case 3:
+                '''eig circuit test'''
+                print('eig_circuit_test')
+                S=time.time()
+                for i in range(1, NUM_MATRIX + 1):
+                    INPUT_FILE = os.path.join(INPUT_PATH, 'eig', f"{i}.txt")
+                    NETLIST_DIR_EIG = os.path.join(NETLIST_PATH, 'eig',f"sp{i}")
+                    os.makedirs(NETLIST_DIR_EIG, exist_ok=True)
+
+                    V_out, N, A, eig_lambda, num_eig, A_actual = Get_Results(INPUT_FILE, NETLIST_DIR_EIG, CIRCUIT=3)
+
+                    # eigenvalues, positive_flag = check_positive_real_eigenvalues(A_actual)
+                    condition_number = np.linalg.cond(A_actual)
+                    # if not positive_flag:
+                    #     print(f"Negative or non-real eigenvalue encountered at matrix {i}. Exiting simulation{i}.")
+                    #     inv_folder = os.path.join(OUTPUT_PATH, 'inv')
+                    #     os.makedirs(inv_folder, exist_ok=True)
+                    #     MATRIX_CHECK_FILE = os.path.join(inv_folder, f"matrix_check{i}.txt")
+                    #     INV_stability_check(eigenvalues, positive_flag, condition_number, MATRIX_CHECK_FILE)
+                    #     continue
+
+                    eig_folder = os.path.join(OUTPUT_PATH, 'eig')
+                    os.makedirs(eig_folder, exist_ok=True)
+                    OUTPUT_FILE = os.path.join(eig_folder, f"{i}.txt")
+                    # MATRIX_CHECK_FILE = os.path.join(eig_folder, f"matrix_check{i}.txt")
+                    # INV_stability_check(eigenvalues, positive_flag, condition_number, MATRIX_CHECK_FILE)
+                    EIG_result(V_out, num_eig, OUTPUT_FILE, eig_lambda)                                   # result of eig
+
+                    RESULT_VERIFY_DIR = os.path.join(eig_folder, f"cmp{i}")
+                    os.makedirs(RESULT_VERIFY_DIR, exist_ok=True)
+
+                    x_out = np.zeros_like(V_out)
+                    eig_vals, eig_vecs = np.linalg.eig(A)
+                    # for eig_value in eig_vals:
+                    #     idx = np.where(np.isclose(eig_vals, eig_value))[0]
+                    #     if len(idx) > 0:
+                    #         EIG_result_verify(V_out[j], eig_vecs[:, idx[0]], RESULT_VERIFY_FILE)
+                    for j in range(num_eig):
+                        # V_out[j] = V_out[j] * eig_vecs[0, j] / V_out[j, 0]
+                        V_out[j] = V_out[j] / V_out[j][np.argmax(np.abs(V_out[j]))]
+                        eig_vecs[:, j] = eig_vecs[:, j] / eig_vecs[np.argmax(np.abs(eig_vecs[:, j])) , j]
+                        RESULT_VERIFY_FILE = os.path.join(RESULT_VERIFY_DIR, f"{j+1}.txt")
+                        EIG_result_verify(V_out[j], eig_vecs[:, j], RESULT_VERIFY_FILE, eig_vals[j])
+
+                E=time.time()
+                print(E-S)
+            
             case _:
                 break        

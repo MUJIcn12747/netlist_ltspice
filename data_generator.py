@@ -1,7 +1,7 @@
 import random
 import os
 import numpy as np
-from parameters import MIN_VALUE, MAX_VALUE, N_SIZE,ROW_PINV,COL_PINV,NUM_V,NUM_I,NUM_MATRIX,INPUT_PATH, CIRCUIT
+from parameters import MIN_VALUE, MAX_VALUE, N_SIZE,ROW_PINV,COL_PINV, NUM_V,NUM_I,NUM_EIG, NUM_MATRIX,INPUT_PATH, CIRCUIT
 from formula import generate_diagonal_dominant_matrix, generate_positive_definite_matrix
 
 def generate_numbers(N, row_pinv, col_pinv, num_V, num_I, num_Matrix, output_dir=INPUT_PATH):
@@ -76,6 +76,30 @@ def generate_numbers(N, row_pinv, col_pinv, num_V, num_I, num_Matrix, output_dir
                     for _ in range(num_I):
                         random_numbers = [f"{random.uniform(1, 9):.2f}" for _ in range(row_pinv)]
                         file.write(" ".join(random_numbers) + "\n")
+            case 3:
+                eig_folder = os.path.join(output_dir, 'eig')
+                os.makedirs(eig_folder, exist_ok=True)
+                output_file = os.path.join(eig_folder, f"{i}.txt")
+
+                with open(output_file, "w") as file:
+                    # Write the first line: the number N
+                    file.write(f"{N}\n")
+            
+                    A = generate_positive_definite_matrix(N, max_value, min_value)
+                    # A = generate_diagonal_dominant_matrix(N, max_value, min_value)
+                    # condition_number = np.linalg.cond(A)
+                    # print(condition_number)
+
+                    # Write the matrix to the file
+                    for row in A:
+                        file.write(" ".join(f"{value:.2f}" for value in row) + "\n")
+
+                    eigenvalues = np.linalg.eigvals(A)
+            
+                    # for eig_value in eigenvalues:
+                    #     file.write(f"{eig_value:.2f}\n")
+                    for i in range(num_eig):
+                        file.write(f"{eigenvalues[i]:.2f}\n")
             case _:break 
 
 # Example usage
@@ -86,5 +110,6 @@ row_pinv = ROW_PINV
 col_pinv = COL_PINV
 num_V = NUM_V
 num_I = NUM_I                   # number of input current vectors in inv
+num_eig = NUM_EIG
 num_Matrix = NUM_MATRIX             # number of input conductance matrices
 generate_numbers(N, row_pinv, col_pinv, num_V, num_I, num_Matrix)
