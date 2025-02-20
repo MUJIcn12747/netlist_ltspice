@@ -2,7 +2,7 @@
 main_folder = fullfile(pwd, 'outputFile');
 
 % 弹出文件夹选择对话框，限制用户只能选择 mvm 或 inv 文件夹
-selected_folder = uigetdir(main_folder, 'Choose mvm or inv or pinv');
+selected_folder = uigetdir(main_folder, 'Choose mvm or inv or pinv or eig');
 
 % 如果用户没有选择文件夹，返回的路径为空
 if selected_folder == 0

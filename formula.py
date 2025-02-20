@@ -63,3 +63,7 @@ def Calculate_diag_matrixU(matrix_A):
 def Calculate_Thermal_noise(Boltzmann_k, Temperature, Circuit_Bandwidth, R):
     noise = np.sqrt(4 * Boltzmann_k * Temperature * Circuit_Bandwidth * R)
     return noise
+
+def Calculate_Relative_Error(ideal, test):
+    # 计算ideal和test之间的2范数相对误差
+    return np.linalg.norm(ideal - test) / np.linalg.norm(ideal)

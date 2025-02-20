@@ -3,13 +3,13 @@ input parameter
 '''
 MIN_VALUE = 1
 MAX_VALUE = 2
-N_SIZE = 64                     # Replace with your desired value for N (size of matrix)
+N_SIZE = 16                     # Replace with your desired value for N (size of matrix)
 ROW_PINV = 6                    # number of rows of pinv
 COL_PINV = 4                    # number of columns of pinv
 NUM_V = 5                       # number of input voltage vectors in mvm
-NUM_I = 2                       # number of input current vectors in inv or pinv
+NUM_I = 5                       # number of input current vectors in inv or pinv
 NUM_EIG = 1                     # number of eigenvalues in eig
-NUM_MATRIX = 4                  # number of input conductance matrices
+NUM_MATRIX = 5                  # number of input conductance matrices
 
 '''
 file path
@@ -28,7 +28,7 @@ OPA = 1
     3  AD8606 (cmos)
 '''
 
-CIRCUIT = 3
+CIRCUIT = 1
 '''
 0  mvm
 1  inv
@@ -54,7 +54,7 @@ Cell model
 maxConductance = 200 * 1e-6		    # Maximum cell conductance (S)
 minConductance = 5 * 1e-6	        # Minimum cell conductance (S)
 AM_or_QM = True
-error_range_AM = 0.1 * 1e-6
+error_range_AM = 0 * 1e-6
 num_Bit = 10
 sigma_QW = 1 * 1e-6
 unit_Current = 200 * 1e-6                   # Maximum input current (A)
@@ -68,10 +68,11 @@ Column_InterConnection_Resistor=0
 '''
 Noise model
 '''
-Add_Noise = False
+Add_Noise = True
+NoiseModel_or_NoiseSource = False
 Boltzmann_k = 1.38e-23
 Temperature = 300                       # Temperature in Kelvin (example value)
-Circuit_Bandwidth = 100 * 1e6           # Bandwidth in Hz (example value)
+Circuit_Bandwidth = 16 * 1e6           # Bandwidth in Hz (example value)
 sigma_FC = 0 * 1e-10
 sigma_OA = 0 * 1e-10
 

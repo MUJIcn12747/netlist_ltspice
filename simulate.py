@@ -20,7 +20,7 @@ import time
 import matplotlib.pyplot as plt
 import PyLTSpice 
 from parameters import LTSPICE_EXE
-from parameters import OPA,CIRCUIT,NEG_WEIGHT, maxConductance, Add_Noise
+from parameters import OPA,CIRCUIT,NEG_WEIGHT, maxConductance, NoiseModel_or_NoiseSource, Add_Noise
 from parameters import T_MIN, T_MAX
 
 '''
@@ -74,14 +74,17 @@ def Get_Results(INPUT_FILE, NETLIST_DIR, CIRCUIT):
             else:                                                       # real matrix with negative values
                 A_actual, R, R2 = Mapping_inv_neg(N, A.copy())
 
-            gen_randNoise(R, N, T_MIN, T_MIN, T_MAX, NETLIST_DIR)
+            # gen_randNoise(R, N, T_MIN, T_MIN, T_MAX, NETLIST_DIR)
 
             for i in range(num_I):
                 # Generate the file path for the netlist
                 NETLIST_FILE = os.path.join(NETLIST_DIR, f"{i+1}.cir")
                 V_in = InputVector_to_InputVoltage(vector_b[i].copy())
-                Build_inv(N, R, R2, V_in, NETLIST_FILE, opa_id=OPA, NEG_WEIGHT=NEG_WEIGHT)
-                # Build_inv_randNoise(N, R, R2, V_in, NETLIST_FILE, opa_id=OPA, NEG_WEIGHT=NEG_WEIGHT)
+                if NoiseModel_or_NoiseSource:
+                    Build_inv(N, R, R2, V_in, NETLIST_FILE, opa_id=OPA, NEG_WEIGHT=NEG_WEIGHT)
+                else:
+                    gen_randNoise(R, N, T_MIN, T_MIN, T_MAX, NETLIST_DIR)
+                    Build_inv_randNoise(N, R, R2, V_in, NETLIST_FILE, opa_id=OPA, NEG_WEIGHT=NEG_WEIGHT)
 
                 eigenvalues, positive_flag = check_positive_real_eigenvalues(A_actual)
                 if not positive_flag:
@@ -89,7 +92,7 @@ def Get_Results(INPUT_FILE, NETLIST_DIR, CIRCUIT):
                 
                 RAW_FILE=run_ltspice(NETLIST_FILE)
                 V = read_voltage_inv(N, RAW_FILE)
-                if Add_Noise:
+                if Add_Noise and NoiseModel_or_NoiseSource:
                     V = Overall_output_noise(A_actual, V, N, maxConductance)                             # attach noise model to output vector
                 V_out.append(V)                                      # Append the current V vector to the list
             
