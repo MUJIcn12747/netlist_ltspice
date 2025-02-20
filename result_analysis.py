@@ -17,6 +17,7 @@ from parameters import OPA,CIRCUIT,NEG_WEIGHT
 from parameters import InterConnection_Resistor,Row_InterConnection_Resistor,Column_InterConnection_Resistor
 from simulate import Get_Results
 from positive_eig_check import check_positive_real_eigenvalues
+from NoiseModel_Evaluation import Evaluation
 
 def MVM_result(mvm_result, num_V, write_path):
     with open(write_path, "w") as file:
@@ -174,6 +175,7 @@ if __name__=='__main__':
                     # INV_result(x_out, num_I, OUTPUT_FILE)                                   # result of inv
                 E=time.time()
                 print(E-S)
+                Evaluation()
 
             case 2:
                 '''pinv circuit test'''

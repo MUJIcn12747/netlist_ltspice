@@ -68,8 +68,8 @@ Column_InterConnection_Resistor=0
 '''
 Noise model
 '''
-Add_Noise = True
-NoiseModel_or_NoiseSource = False
+Add_Noise = False
+NoiseModel_or_NoiseSource = True
 Boltzmann_k = 1.38e-23
 Temperature = 300                       # Temperature in Kelvin (example value)
 Circuit_Bandwidth = 16 * 1e6           # Bandwidth in Hz (example value)
