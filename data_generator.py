@@ -1,10 +1,10 @@
 import random
 import os
 import numpy as np
-from parameters import MIN_VALUE, MAX_VALUE, N_SIZE,ROW_PINV,COL_PINV, NUM_V,NUM_I,NUM_EIG, NUM_MATRIX,INPUT_PATH, CIRCUIT
+from parameters import MIN_VALUE, MAX_VALUE, ROW_MVM, COL_MVM, N_SIZE, ROW_PINV,COL_PINV, NUM_V,NUM_I,NUM_EIG, NUM_MATRIX,INPUT_PATH, CIRCUIT
 from formula import generate_diagonal_dominant_matrix, generate_positive_definite_matrix
 
-def generate_numbers(N, row_pinv, col_pinv, num_V, num_I, num_Matrix, output_dir=INPUT_PATH):
+def generate_numbers(row_mvm, col_mvm, N, row_pinv, col_pinv, num_V, num_I, num_Matrix, output_dir=INPUT_PATH):
     """
     Generates multiple files with the specified format:
     - First line: the number N.
@@ -25,16 +25,16 @@ def generate_numbers(N, row_pinv, col_pinv, num_V, num_I, num_Matrix, output_dir
 
                 with open(output_file, "w") as file:
                     # Write the first line: the number N
-                    file.write(f"{N}\n")
+                    file.write(f"{row_mvm} {col_mvm}\n")
             
                     # Write N lines of N random real numbers between 10 and 40
-                    for _ in range(N):
-                        random_numbers = [f"{random.uniform(10, 40):.2f}" for _ in range(N)]
+                    for _ in range(row_mvm):
+                        random_numbers = [f"{random.uniform(10, 40):.2f}" for _ in range(col_mvm)]
                         file.write(" ".join(random_numbers) + "\n")
             
                     # Write the last line: N random real numbers between 1 and 9
                     for _ in range(num_V):
-                        random_numbers = [f"{random.uniform(1, 9):.2f}" for _ in range(N)]
+                        random_numbers = [f"{random.uniform(1, 9):.2f}" for _ in range(col_mvm)]
                         file.write(" ".join(random_numbers) + "\n")
             case 1:
                 inv_folder = os.path.join(output_dir, 'inv')
@@ -105,6 +105,8 @@ def generate_numbers(N, row_pinv, col_pinv, num_V, num_I, num_Matrix, output_dir
 # Example usage
 max_value = MAX_VALUE
 min_value = MIN_VALUE
+row_mvm = ROW_MVM
+col_mvm = COL_MVM
 N = N_SIZE                   # Replace with your desired value for N (size of matrix)
 row_pinv = ROW_PINV
 col_pinv = COL_PINV
@@ -112,4 +114,4 @@ num_V = NUM_V
 num_I = NUM_I                   # number of input current vectors in inv
 num_eig = NUM_EIG
 num_Matrix = NUM_MATRIX             # number of input conductance matrices
-generate_numbers(N, row_pinv, col_pinv, num_V, num_I, num_Matrix)
+generate_numbers(row_mvm, col_mvm, N, row_pinv, col_pinv, num_V, num_I, num_Matrix)

@@ -4,23 +4,25 @@ from NetlistBuilder import Build_inv
 from NetlistBuilder import Read_Param_inv
 from NetlistBuilder import Build_mvm
 from NetlistBuilder import Read_Param_mvm
+from NetlistBuilder import Build_CCRS_mvm
 from NetlistBuilder import Build_pinv
 from NetlistBuilder import Read_Param_pinv
 from NetlistBuilder import Build_eig
 from NetlistBuilder import Read_Param_eig
 from NetlistBuilder import Build_inv_randNoise
-from rawread import read_voltage_inv, read_voltage_mvm, read_voltage_pinv, read_voltage_eig
+from rawread import read_voltage_inv, read_current_mvm, read_voltage_pinv, read_voltage_eig
 from positive_eig_check import check_positive_real_eigenvalues
-from Mapping import InputVector_to_InputVoltage, Mapping_inv_pos, Mapping_inv_neg, Eigenvalue_to_Glambda, Mapping_eig_pos
+from Mapping import InputMapping_mvm, InputMapping_inv, Mapping_mvm_pos, Mapping_inv_pos, Mapping_inv_neg, Eigenvalue_to_Glambda, Mapping_eig_pos
 from noise import Overall_output_noise
 from RandomNoise_generator import gen_randNoise
+from MVM_IRdrop import MVM_IRdrop
 import subprocess
 import os
 import time
 import matplotlib.pyplot as plt
 import PyLTSpice 
 from parameters import LTSPICE_EXE
-from parameters import OPA,CIRCUIT,NEG_WEIGHT, maxConductance, NoiseModel_or_NoiseSource, Add_Noise
+from parameters import OPA,CIRCUIT,NEG_WEIGHT, maxConductance, NoiseModel_or_NoiseSource, Add_Noise, MVM_IRdropModel
 from parameters import T_MIN, T_MAX
 
 '''
@@ -50,20 +52,30 @@ def run_ltspice(NETLIST_PATH):
 def Get_Results(INPUT_FILE, NETLIST_DIR, CIRCUIT):
     match CIRCUIT: 
         case 0: #mvm
-            N, A, V, num_V=Read_Param_inv(INPUT_FILE)
+            N, M, A, V, num_V=Read_Param_mvm(INPUT_FILE)
 
             result_matrix = []
+            if (NEG_WEIGHT==0):
+                A_actual, R, R2 = Mapping_mvm_pos(N, M, A.copy())
+                G_actual = 1 / R
+            else:                                                       # real matrix with negative values
+                # A_actual, R, R2 = Mapping_mvm_neg(N, M, A.copy())
+                Build_CCRS_mvm(N, M, A, V, NETLIST_DIR, opa_id=OPA)
 
             for i in range(num_V):
-                # Generate the file path for the netlist
-                NETLIST_FILE = os.path.join(NETLIST_DIR, f"{i+1}.cir")
-                Build_mvm(N, A.copy(), V[i].copy(), NETLIST_FILE, opa_id=OPA, NEG_WEIGHT=NEG_WEIGHT)
-                RAW_FILE=run_ltspice(NETLIST_FILE)
-                mvm_result=read_voltage_mvm(N, RAW_FILE)
-                result_matrix.append(mvm_result)                # Append the current V vector to the list
+                V_in = InputMapping_mvm(V[i].copy())
+
+                if MVM_IRdropModel:
+                    mvm_result = MVM_IRdrop(N, M, V_in, G_actual, 1e-6, 1000)
+                else:
+                    NETLIST_FILE = os.path.join(NETLIST_DIR, f"{i+1}.cir")
+                    Build_mvm(N, M, R, V_in, NETLIST_FILE, opa_id=OPA)
+                    RAW_FILE=run_ltspice(NETLIST_FILE)
+                    mvm_result=read_current_mvm(N, M, RAW_FILE)
+                result_matrix.append(mvm_result)
             
             result_matrix = np.array(result_matrix)             # Convert the list of vectors into a NumPy array (num_I x N matrix)
-            return result_matrix, N, A, V, num_V
+            return result_matrix, N, M, A, V, num_V
         
         case 1: #inv
             N, A, vector_b, num_I=Read_Param_inv(INPUT_FILE)
@@ -79,7 +91,7 @@ def Get_Results(INPUT_FILE, NETLIST_DIR, CIRCUIT):
             for i in range(num_I):
                 # Generate the file path for the netlist
                 NETLIST_FILE = os.path.join(NETLIST_DIR, f"{i+1}.cir")
-                V_in = InputVector_to_InputVoltage(vector_b[i].copy())
+                V_in = InputMapping_inv(vector_b[i].copy())
                 if Add_Noise and NoiseModel_or_NoiseSource:
                     Build_inv(N, R, R2, V_in, NETLIST_FILE, opa_id=OPA, NEG_WEIGHT=NEG_WEIGHT)
                 elif Add_Noise:

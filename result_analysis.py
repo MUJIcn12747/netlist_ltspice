@@ -11,7 +11,7 @@ import time
 import matplotlib.pyplot as plt
 import PyLTSpice 
 
-from parameters import NUM_MATRIX, INPUT_PATH, NETLIST_PATH, OUTPUT_PATH, LTSPICE_EXE, alpha_inv
+from parameters import NUM_MATRIX, INPUT_PATH, NETLIST_PATH, OUTPUT_PATH, maxConductance, alpha_mvm, alpha_inv
 from parameters import OPA,CIRCUIT,NEG_WEIGHT
 
 from parameters import InterConnection_Resistor,Row_InterConnection_Resistor,Column_InterConnection_Resistor
@@ -116,7 +116,7 @@ if __name__=='__main__':
                     NETLIST_DIR_MVM = os.path.join(NETLIST_PATH, 'mvm',f"sp{i}")
                     os.makedirs(NETLIST_DIR_MVM, exist_ok=True)
 
-                    mvm_result, N, A, V, num_V = Get_Results(INPUT_FILE, NETLIST_DIR_MVM, CIRCUIT=0)
+                    mvm_result, N, M, A, V, num_V = Get_Results(INPUT_FILE, NETLIST_DIR_MVM, CIRCUIT=0)
                     mvm_folder = os.path.join(OUTPUT_PATH, 'mvm')
                     os.makedirs(mvm_folder, exist_ok=True)
                     OUTPUT_FILE = os.path.join(mvm_folder, f"{i}.txt")
@@ -125,9 +125,10 @@ if __name__=='__main__':
                     RESULT_VERIFY_DIR = os.path.join(mvm_folder, f"cmp{i}")
                     os.makedirs(RESULT_VERIFY_DIR, exist_ok=True)
 
+                    mvm_test = np.zeros_like(mvm_result)
                     for j in range(num_V):
                         mvm_ideal = np.dot(A, V[j])
-                        mvm_test = mvm_result * mvm_ideal[0] / mvm_result[j, 0]
+                        mvm_test[j] = mvm_result[j] * np.max(A) * np.max(V[j]) / (alpha_mvm * maxConductance)
                         RESULT_VERIFY_FILE = os.path.join(RESULT_VERIFY_DIR, f"{j+1}.txt")
                         MVM_result_verify(mvm_test[j], mvm_ideal, RESULT_VERIFY_FILE)
                 E=time.time()

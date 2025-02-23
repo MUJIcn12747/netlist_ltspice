@@ -9,7 +9,7 @@ import parameters as param
 from OPAS import opa_
 from Circuit import Circuit_
 from parameters import maxConductance, minConductance, AM_or_QM, error_range_AM, num_Bit, sigma_QW, unit_Current, unit_Voltage, alpha_inv
-from Mapping import INV_RealDevice_Update, InputVector_to_InputVoltage
+from Mapping import INV_RealDevice_Update
 '''输入文件:inputFile\i.txt
    输入格式:第一行矩阵规模N
             之后N*N权重电导
@@ -58,8 +58,9 @@ def Read_Param_mvm(file_path):
     try:
         with open(file_path, 'r') as file:
             tmp = file.readline().strip()
-            N=int(tmp)
-            if N <= 0:
+            N=int(list(tmp.split())[0])
+            M=int(list(tmp.split())[1])
+            if (N <= 0) or (M <= 0):
                 raise ValueError("Array Size Error")
             data = []
 
@@ -67,7 +68,7 @@ def Read_Param_mvm(file_path):
                 line = file.readline().strip()
                 numbers = list(map(float, line.split()))
 
-                if len(numbers) != N:
+                if len(numbers) != M:
                     raise ValueError("Array Number Error")
                 data.append(numbers)
             A=np.array(data)
@@ -79,12 +80,12 @@ def Read_Param_mvm(file_path):
                 if line:  # Ignore empty lines
                     numbers = list(map(float, line.split()))  # Convert string to float
 
-                    if len(numbers) != N:
+                    if len(numbers) != M:
                         raise ValueError("Array Number Error")
                     data.append(numbers)
             V=np.array(data)
             num_V = V.shape[0]
-            return N, A, V, num_V
+            return N, M, A, V, num_V
     
     except Exception as e:
         print(f"Read File Error: {e}")
@@ -218,44 +219,36 @@ def Build_inv(N, R, R2, V_in, write_path, opa_id=0, NEG_WEIGHT=0):
     circuit.generate_netlist_file(write_path)
     circuit.clear()
 
-def Build_mvm(N, A, V, write_path, opa_id=0, NEG_WEIGHT=0):
+def Build_mvm(N, M, R, V, write_path, opa_id=0):
     circuit=Circuit_()
     opa=opa_(opa_id)
 
-    if (NEG_WEIGHT==0):                     # attach device model to conductance
-        A_actual = INV_RealDevice_Update(A,N,N)
-        A = 1 / A_actual                   # convert conductance to resistance
-        V = V * unit_Voltage / np.max(V)
-    else:                                   # real matrix with negative values
-        Build_CCRS_mvm(N,A,V,write_path,opa_id)
-        return
-    
     R_=10000
     for i in range(N):
-        for j in range(N):
-            r_num=N*i+j+1
-            up_node=j+N+1
+        for j in range(M):
+            r_num=M*i+j+1
+            up_node=j+max(N, M)+1
             down_node=i+1
-            circuit.add_res(r_num,up_node,down_node,A[i][j])
+            circuit.add_res(r_num,up_node,down_node,R[i][j])
 
-    for i in range(N):
-        node=i+1+N
+    for i in range(M):
+        node=i+1+max(N, M)
         circuit.add_vdc(i+1,node,0,V[i])
 
     voltage=opa.work_voltage()
 
     circuit.add_vdc(999,999,0,voltage)
     circuit.add_vdc(998,0,998,voltage)
-    #结果转化为电压读出
-    for i in range(N):#写入运放    
+
+    for i in range(N):
         node_in=i+1
-        node_out=i+2*N+1
+        node_out=2*max(N, M)+1+i
         circuit.add_opa(i+1,0,node_in,999,998,node_out,opa.name())
 
     for i in range(N):
-        r_num=i+1+N*N
+        r_num=i+1+N*M
         up_node=i+1
-        down_node=2*N+1+i
+        down_node=2*max(N, M)+1+i
         circuit.add_res(r_num,up_node,down_node,R_)
 
     circuit.add_lib('LTC')
@@ -263,7 +256,7 @@ def Build_mvm(N, A, V, write_path, opa_id=0, NEG_WEIGHT=0):
     circuit.generate_netlist_file(write_path)
     circuit.clear()
 
-def Build_CCRS_mvm(N, A, V, write_path, opa_id=0):
+def Build_CCRS_mvm(N, M, A, V, write_path, opa_id=0):
     circuit=Circuit_()
 
     A2=A.copy()
@@ -273,7 +266,7 @@ def Build_CCRS_mvm(N, A, V, write_path, opa_id=0):
     g_diff=np.zeros(N)
     g_min=np.min(np.abs(A))
     for i in range(N):
-        for j in range(N):
+        for j in range(M):
             if (A[i][j]>0):
                 A[i][j]=A[i][j]*2
                 A2[i][j]=A[i][j]/2
@@ -381,6 +374,7 @@ def Build_pinv(N, M, A, I, write_path, opa_id=0, NEG_WEIGHT=0):
         A = 1 / updated_A[:N,:] 
         A2 = 1 / updated_A[N:,:]            
         I = I * unit_Current / np.max(I)
+
     for i in range(N):
         for j in range(M):
             r_num=M*i+j+1

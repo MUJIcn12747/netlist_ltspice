@@ -3,6 +3,8 @@ input parameter
 '''
 MIN_VALUE = 1
 MAX_VALUE = 2
+ROW_MVM = 8                    # number of rows of mvm
+COL_MVM = 32                    # number of columns of mvm
 N_SIZE = 16                     # Replace with your desired value for N (size of matrix)
 ROW_PINV = 6                    # number of rows of pinv
 COL_PINV = 4                    # number of columns of pinv
@@ -28,7 +30,7 @@ OPA = 1
     3  AD8606 (cmos)
 '''
 
-CIRCUIT = 1
+CIRCUIT = 0
 '''
 0  mvm
 1  inv
@@ -54,11 +56,12 @@ Cell model
 maxConductance = 200 * 1e-6		    # Maximum cell conductance (S)
 minConductance = 5 * 1e-6	        # Minimum cell conductance (S)
 AM_or_QM = True
-error_range_AM = 0 * 1e-6
+error_range_AM = 0.1 * 1e-6
 num_Bit = 10
 sigma_QW = 1 * 1e-6
 unit_Current = 200 * 1e-6                   # Maximum input current (A)
 unit_Voltage = 0.2                          # Maximum input voltage (V)
+alpha_mvm = 0.2                            # Scaling factor for input of mvm
 alpha_inv = 0.01                            # Scaling factor for input of inv
 
 InterConnection_Resistor=0   
@@ -68,13 +71,19 @@ Column_InterConnection_Resistor=0
 '''
 Noise model
 '''
-Add_Noise = False
-NoiseModel_or_NoiseSource = True
+Add_Noise = True
+NoiseModel_or_NoiseSource = False
 Boltzmann_k = 1.38e-23
 Temperature = 300                       # Temperature in Kelvin (example value)
 Circuit_Bandwidth = 16 * 1e6           # Bandwidth in Hz (example value)
 sigma_FC = 0 * 1e-10
 sigma_OA = 0 * 1e-10
+
+'''
+IR-drop model
+'''
+MVM_IRdropModel = True
+WireResistance = 1
 
 '''
 SPICE parameter

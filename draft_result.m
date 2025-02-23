@@ -1,23 +1,31 @@
 % 设置主目录路径（当前文件夹下的 outputFile 文件夹）
 main_folder = fullfile(pwd, 'outputFile');
 
-% 弹出文件夹选择对话框，限制用户只能选择 mvm 或 inv 文件夹
+% 弹出文件夹选择对话框，限制用户只能选择 mvm 或 inv 或 pinv 或 eig 文件夹
 selected_folder = uigetdir(main_folder, 'Choose mvm or inv or pinv or eig');
 
 % 如果用户没有选择文件夹，返回的路径为空
 if selected_folder == 0
-    disp('No choosen folder');
+    disp('No chosen folder');
 else
-    disp(['choosen folder: ', selected_folder]);
+    disp(['Chosen folder: ', selected_folder]);
 end
 
 % 假设 cmp1, cmp2, ..., cmpN 是子文件夹
 cmp_folders = dir(fullfile(selected_folder, 'cmp*'));  % 找到所有以 "cmp" 开头的文件夹
 
+% 判断是否选择了 eig 文件夹
+is_eig_folder = contains(selected_folder, 'eig');  % 判断选中的文件夹是否是 'eig'
+
 % 遍历每个 cmp 文件夹
 for i = 1:length(cmp_folders)
     cmp_folder_path = fullfile(selected_folder, cmp_folders(i).name);  % 当前 cmp 文件夹路径
     txt_files = dir(fullfile(cmp_folder_path, '*.txt'));  % 找到所有 .txt 文件
+    
+    % 如果是 eig 文件夹，只处理第一个 txt 文件
+    if is_eig_folder
+        txt_files = txt_files(1);  % 只保留第一个文件
+    end
     
     % 遍历每个 txt 文件
     for j = 1:length(txt_files)
